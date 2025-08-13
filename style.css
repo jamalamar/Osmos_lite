@@ -23,7 +23,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(ellipse at center, #001122 0%, #000000 100%);
+    background: radial-gradient(ellipse at center, #2d0810 0%, #0a0002 100%);
     cursor: crosshair;
 }
 
@@ -55,7 +55,7 @@ body {
 }
 
 .score span, .level span, .mass span {
-    color: #4fc3f7;
+    color: #8bc34a;
     font-weight: bold;
 }
 
@@ -89,8 +89,8 @@ body {
 .game-title {
     font-size: 72px;
     margin-bottom: 10px;
-    color: #4fc3f7;
-    text-shadow: 0 0 20px rgba(79, 195, 247, 0.5);
+    color: #8bc34a;
+    text-shadow: 0 0 20px rgba(139, 195, 74, 0.6);
     letter-spacing: 8px;
     font-weight: bold;
 }
@@ -109,8 +109,8 @@ body {
 }
 
 .play-button, .journey-button {
-    background: linear-gradient(135deg, #4fc3f7, #29b6f6);
-    color: #000;
+    background: linear-gradient(135deg, #8bc34a, #689f38);
+    color: #fff;
     border: none;
     padding: 20px 60px;
     font-size: 24px;
@@ -119,24 +119,24 @@ body {
     transition: all 0.3s;
     font-weight: bold;
     letter-spacing: 2px;
-    box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
+    box-shadow: 0 4px 15px rgba(139, 195, 74, 0.3);
 }
 
 .journey-button {
-    background: linear-gradient(135deg, #7c4dff, #651fff);
-    box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
+    background: linear-gradient(135deg, #d32f2f, #b71c1c);
+    box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3);
 }
 
 .play-button:hover {
-    background: linear-gradient(135deg, #29b6f6, #4fc3f7);
+    background: linear-gradient(135deg, #689f38, #8bc34a);
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(79, 195, 247, 0.5);
+    box-shadow: 0 6px 20px rgba(139, 195, 74, 0.5);
 }
 
 .journey-button:hover {
-    background: linear-gradient(135deg, #651fff, #7c4dff);
+    background: linear-gradient(135deg, #b71c1c, #d32f2f);
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(124, 77, 255, 0.5);
+    box-shadow: 0 6px 20px rgba(211, 47, 47, 0.5);
 }
 
 .game-over {
@@ -194,7 +194,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(ellipse at center, #0a0e27 0%, #000000 100%);
+    background: radial-gradient(ellipse at center, #3d1020 0%, #1a0008 100%);
     cursor: pointer;
 }
 
