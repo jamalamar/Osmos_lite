@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Osmos Clone</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div class="ui-overlay">
+            <div class="top-bar">
+                <div class="score">Score: <span id="score">0</span></div>
+                <div class="level">Level: <span id="level">1</span></div>
+                <div class="mass">Mass: <span id="mass">100</span></div>
+            </div>
+            <div class="game-over hidden" id="gameOver">
+                <h2 id="gameOverText">Game Over</h2>
+                <p id="gameOverReason"></p>
+                <button id="restartBtn">Restart</button>
+            </div>
+            <div class="instructions">
+                <p>Click to move • Absorb smaller cells • Avoid larger ones</p>
+            </div>
+        </div>
+    </div>
+    <script src="utils.js"></script>
+    <script src="cell.js"></script>
+    <script src="physics.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
