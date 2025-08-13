@@ -15,6 +15,17 @@
                 <div class="level">Level: <span id="level">1</span></div>
                 <div class="mass">Mass: <span id="mass">100</span></div>
             </div>
+            <div class="start-screen" id="startScreen">
+                <h1 class="game-title">OSMOS</h1>
+                <p class="game-subtitle">Absorb to Survive</p>
+                <div class="button-container">
+                    <button id="playBtn" class="play-button">PLAY</button>
+                    <button id="journeyBtn" class="journey-button">JOURNEY</button>
+                </div>
+            </div>
+            <div class="map-screen hidden" id="mapScreen">
+                <canvas id="mapCanvas"></canvas>
+            </div>
             <div class="game-over hidden" id="gameOver">
                 <h2 id="gameOverText">Game Over</h2>
                 <p id="gameOverReason"></p>
@@ -28,6 +39,7 @@
     <script src="utils.js"></script>
     <script src="cell.js"></script>
     <script src="physics.js"></script>
+    <script src="map.js"></script>
     <script src="game.js"></script>
 </body>
 </html>

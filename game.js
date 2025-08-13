@@ -6,13 +6,17 @@ class Game {
         this.player = null;
         this.score = 0;
         this.level = 1;
-        this.gameState = 'playing';
+        this.gameState = 'menu';
         this.lastTime = 0;
         this.particles = [];
+        this.gameStarted = false;
+        
+        this.mapSystem = new MapSystem();
+        this.mapCanvas = document.getElementById('mapCanvas');
+        this.mapAnimationId = null;
         
         this.setupCanvas();
         this.setupEventListeners();
-        this.initLevel(1);
         this.gameLoop(0);
     }
 
@@ -41,9 +45,102 @@ class Game {
             }
         });
 
+        document.getElementById('playBtn').addEventListener('click', () => {
+            this.startGame();
+        });
+
+        document.getElementById('journeyBtn').addEventListener('click', () => {
+            this.openMap();
+        });
+
         document.getElementById('restartBtn').addEventListener('click', () => {
             this.restart();
         });
+
+        // Map canvas events
+        this.mapCanvas.addEventListener('click', (e) => {
+            if (this.gameState !== 'map') return;
+            
+            const rect = this.mapCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check for back button
+            if (x >= 20 && x <= 120 && y >= 20 && y <= 60) {
+                this.closeMap();
+                return;
+            }
+            
+            // Check for play button on selected level
+            if (this.mapSystem.selectedNode) {
+                const infoX = this.mapCanvas.width - 220;
+                if (x >= infoX + 50 && x <= infoX + 150 && y >= 100 && y <= 130) {
+                    this.playJourneyLevel(this.mapSystem.selectedNode);
+                }
+            }
+        });
+    }
+
+    startGame() {
+        document.getElementById('startScreen').classList.add('hidden');
+        this.gameState = 'playing';
+        this.gameStarted = true;
+        this.initLevel(1);
+    }
+
+    openMap() {
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('mapScreen').classList.remove('hidden');
+        this.gameState = 'map';
+        
+        // Setup map canvas
+        this.mapCanvas.width = window.innerWidth;
+        this.mapCanvas.height = window.innerHeight;
+        this.mapSystem.init(this.mapCanvas);
+        
+        // Start map render loop
+        this.renderMap();
+    }
+
+    closeMap() {
+        document.getElementById('mapScreen').classList.add('hidden');
+        document.getElementById('startScreen').classList.remove('hidden');
+        this.gameState = 'menu';
+        
+        // Stop map render loop
+        if (this.mapAnimationId) {
+            cancelAnimationFrame(this.mapAnimationId);
+            this.mapAnimationId = null;
+        }
+    }
+
+    renderMap() {
+        if (this.gameState !== 'map') return;
+        
+        this.mapSystem.render();
+        this.mapAnimationId = requestAnimationFrame(() => this.renderMap());
+    }
+
+    playJourneyLevel(levelNode) {
+        document.getElementById('mapScreen').classList.add('hidden');
+        this.gameState = 'playing';
+        this.gameStarted = true;
+        
+        // Cancel map animation
+        if (this.mapAnimationId) {
+            cancelAnimationFrame(this.mapAnimationId);
+            this.mapAnimationId = null;
+        }
+        
+        // Initialize level based on node type
+        this.currentJourneyLevel = levelNode;
+        this.initJourneyLevel(levelNode);
+    }
+
+    initJourneyLevel(levelNode) {
+        // For now, just initialize a normal level
+        // Later we'll customize based on levelNode.type
+        this.initLevel(levelNode.id + 1);
     }
 
     initLevel(levelNum) {
@@ -137,6 +234,12 @@ class Game {
     }
 
     render() {
+        if (this.gameState === 'menu') {
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            return;
+        }
+        
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -176,14 +279,29 @@ class Game {
 
     levelComplete() {
         this.score += this.level * 1000;
-        this.level++;
         
-        if (this.level > 10) {
-            this.gameOver(true, 'Congratulations! You completed all levels!');
-        } else {
+        // If playing journey mode
+        if (this.currentJourneyLevel) {
+            this.mapSystem.completeLevel(this.currentJourneyLevel.id);
+            
+            // Return to map
             setTimeout(() => {
-                this.initLevel(this.level);
+                document.getElementById('mapScreen').classList.remove('hidden');
+                this.gameState = 'map';
+                this.currentJourneyLevel = null;
+                this.renderMap();
             }, 1500);
+        } else {
+            // Normal mode progression
+            this.level++;
+            
+            if (this.level > 10) {
+                this.gameOver(true, 'Congratulations! You completed all levels!');
+            } else {
+                setTimeout(() => {
+                    this.initLevel(this.level);
+                }, 1500);
+            }
         }
     }
 
@@ -208,10 +326,28 @@ class Game {
             );
             this.particles.push(...explosion);
         }
+        
+        // If in journey mode and failed, allow retry from map
+        if (this.currentJourneyLevel && !victory) {
+            setTimeout(() => {
+                document.getElementById('gameOver').classList.add('hidden');
+                document.getElementById('mapScreen').classList.remove('hidden');
+                this.gameState = 'map';
+                this.currentJourneyLevel = null;
+                this.renderMap();
+            }, 3000);
+        }
     }
 
     restart() {
-        this.initLevel(1);
+        document.getElementById('startScreen').classList.remove('hidden');
+        this.gameState = 'menu';
+        this.gameStarted = false;
+        this.cells = [];
+        this.particles = [];
+        this.player = null;
+        this.score = 0;
+        this.level = 1;
     }
 
     gameLoop(currentTime) {
