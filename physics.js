@@ -2,10 +2,52 @@ class Physics {
     static checkCollisions(cells) {
         const collisions = [];
         
-        for (let i = 0; i < cells.length; i++) {
-            for (let j = i + 1; j < cells.length; j++) {
-                if (cells[i].checkCollision(cells[j])) {
-                    collisions.push([cells[i], cells[j]]);
+        // Use spatial partitioning for efficiency in larger world
+        const gridSize = 500;
+        const grid = new Map();
+        
+        // Place cells in grid
+        for (let cell of cells) {
+            const gridX = Math.floor(cell.x / gridSize);
+            const gridY = Math.floor(cell.y / gridSize);
+            const key = `${gridX},${gridY}`;
+            
+            if (!grid.has(key)) {
+                grid.set(key, []);
+            }
+            grid.get(key).push(cell);
+        }
+        
+        // Check collisions within and between neighboring grid cells
+        for (let [key, cellsInGrid] of grid) {
+            const [gx, gy] = key.split(',').map(Number);
+            
+            // Check within same grid cell
+            for (let i = 0; i < cellsInGrid.length; i++) {
+                for (let j = i + 1; j < cellsInGrid.length; j++) {
+                    if (cellsInGrid[i].checkCollision(cellsInGrid[j])) {
+                        collisions.push([cellsInGrid[i], cellsInGrid[j]]);
+                    }
+                }
+            }
+            
+            // Check neighboring cells
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    if (dx === 0 && dy === 0) continue;
+                    
+                    const neighborKey = `${gx + dx},${gy + dy}`;
+                    if (grid.has(neighborKey)) {
+                        const neighborCells = grid.get(neighborKey);
+                        
+                        for (let cell1 of cellsInGrid) {
+                            for (let cell2 of neighborCells) {
+                                if (cell1.checkCollision(cell2)) {
+                                    collisions.push([cell1, cell2]);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -70,39 +112,60 @@ class Physics {
     }
 
     static applyGravity(cells, strength = 0.0001) {
-        for (let i = 0; i < cells.length; i++) {
-            for (let j = i + 1; j < cells.length; j++) {
-                const dx = cells[j].x - cells[i].x;
-                const dy = cells[j].y - cells[i].y;
+        // Only apply gravity between large masses to optimize performance
+        const largeCells = cells.filter(c => c.mass > 100);
+        
+        for (let i = 0; i < largeCells.length; i++) {
+            for (let j = i + 1; j < largeCells.length; j++) {
+                const dx = largeCells[j].x - largeCells[i].x;
+                const dy = largeCells[j].y - largeCells[i].y;
                 const distSq = dx * dx + dy * dy;
                 
-                if (distSq < 10000 || distSq > 1000000) continue;
+                // Adjusted for larger world
+                if (distSq < 50000 || distSq > 10000000) continue;
                 
-                const force = strength * (cells[i].mass * cells[j].mass) / distSq;
+                const force = strength * (largeCells[i].mass * largeCells[j].mass) / distSq;
                 const dist = Math.sqrt(distSq);
                 
                 const fx = (dx / dist) * force;
                 const fy = (dy / dist) * force;
                 
-                cells[i].vx += fx / cells[i].mass;
-                cells[i].vy += fy / cells[i].mass;
-                cells[j].vx -= fx / cells[j].mass;
-                cells[j].vy -= fy / cells[j].mass;
+                largeCells[i].vx += fx / largeCells[i].mass;
+                largeCells[i].vy += fy / largeCells[i].mass;
+                largeCells[j].vx -= fx / largeCells[j].mass;
+                largeCells[j].vy -= fy / largeCells[j].mass;
             }
         }
     }
 
-    static createExplosion(x, y, cells, count = 8) {
+    static createExplosion(x, y, cells, count = 16) {
         const particles = [];
         
+        // Create more dramatic explosions
         for (let i = 0; i < count; i++) {
             const angle = (Math.PI * 2 * i) / count + Utils.random(-0.2, 0.2);
-            const speed = Utils.random(100, 300);
-            const mass = Utils.random(5, 15);
+            const speed = Utils.random(200, 500);
+            const mass = Utils.random(3, 20);
             
             particles.push(new Cell(
-                x + Math.cos(angle) * 10,
-                y + Math.sin(angle) * 10,
+                x + Math.cos(angle) * 20,
+                y + Math.sin(angle) * 20,
+                mass,
+                Math.cos(angle) * speed,
+                Math.sin(angle) * speed,
+                'particle'
+            ));
+        }
+        
+        // Add some smaller debris
+        for (let i = 0; i < count / 2; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Utils.random(50, 150);
+            const mass = Utils.random(1, 5);
+            
+            particles.push(new Cell(
+                x + Math.cos(angle) * 5,
+                y + Math.sin(angle) * 5,
                 mass,
                 Math.cos(angle) * speed,
                 Math.sin(angle) * speed,

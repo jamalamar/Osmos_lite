@@ -55,9 +55,12 @@ class Cell {
 
         const dist = Utils.distance(this.x, this.y, player.x, player.y);
         
-        if (dist < this.huntRadius && this.mass > player.mass * 1.2) {
+        // Increased hunt radius for larger world
+        const huntRadius = this.huntRadius * 3;
+        
+        if (dist < huntRadius && this.mass > player.mass * 1.2) {
             const angle = Math.atan2(player.y - this.y, player.x - this.x);
-            const force = this.huntSpeed * (1 - dist / this.huntRadius);
+            const force = this.huntSpeed * (1 - dist / huntRadius) * 2;
             
             this.vx += Math.cos(angle) * force * deltaTime;
             this.vy += Math.sin(angle) * force * deltaTime;
@@ -90,6 +93,32 @@ class Cell {
             'ejected'
         );
     }
+    
+    ejectMassWithAngle(angle, amount) {
+        if (this.mass <= 20) return null;
+        
+        const ejectAmount = Math.min(amount, this.mass * 0.08);
+        this.mass -= ejectAmount;
+        this.targetRadius = Utils.massToRadius(this.mass);
+
+        const speed = 400;
+        
+        const ejectDistance = this.radius + Utils.massToRadius(ejectAmount) + 5;
+        const ejectX = this.x + Math.cos(angle) * ejectDistance;
+        const ejectY = this.y + Math.sin(angle) * ejectDistance;
+        
+        this.vx -= Math.cos(angle) * speed * (ejectAmount / this.mass) * 1.5;
+        this.vy -= Math.sin(angle) * speed * (ejectAmount / this.mass) * 1.5;
+
+        return new Cell(
+            ejectX,
+            ejectY,
+            ejectAmount,
+            Math.cos(angle) * speed,
+            Math.sin(angle) * speed,
+            'ejected'
+        );
+    }
 
     draw(ctx, playerMass, isPlayer = false) {
         if (this.opacity <= 0) return;
@@ -101,19 +130,41 @@ class Cell {
         const drawRadius = this.radius * pulse;
 
         if (isPlayer) {
+            // Viral green gradient for player
             const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, drawRadius);
-            gradient.addColorStop(0, 'rgba(100, 200, 255, 0.8)');
-            gradient.addColorStop(0.7, 'rgba(50, 150, 255, 0.5)');
-            gradient.addColorStop(1, 'rgba(30, 100, 200, 0.2)');
+            gradient.addColorStop(0, 'rgba(139, 195, 74, 0.9)');
+            gradient.addColorStop(0.5, 'rgba(100, 180, 50, 0.7)');
+            gradient.addColorStop(1, 'rgba(50, 120, 30, 0.3)');
             
             ctx.fillStyle = gradient;
             ctx.beginPath();
             ctx.arc(this.x, this.y, drawRadius, 0, Math.PI * 2);
             ctx.fill();
             
-            ctx.strokeStyle = 'rgba(100, 200, 255, 0.8)';
+            // Viral spike effect
+            ctx.strokeStyle = 'rgba(139, 195, 74, 0.8)';
             ctx.lineWidth = 2;
             ctx.stroke();
+            
+            // Add spikes around virus
+            const spikeCount = 8;
+            for (let i = 0; i < spikeCount; i++) {
+                const spikeAngle = (Math.PI * 2 * i) / spikeCount + this.pulsePhase;
+                const spikeLength = drawRadius * 0.2 * pulse;
+                
+                ctx.beginPath();
+                ctx.moveTo(
+                    this.x + Math.cos(spikeAngle) * drawRadius,
+                    this.y + Math.sin(spikeAngle) * drawRadius
+                );
+                ctx.lineTo(
+                    this.x + Math.cos(spikeAngle) * (drawRadius + spikeLength),
+                    this.y + Math.sin(spikeAngle) * (drawRadius + spikeLength)
+                );
+                ctx.strokeStyle = 'rgba(139, 195, 74, 0.6)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
         } else {
             const color = this.type === 'hunter' 
                 ? `hsl(280, 70%, ${50 + Math.sin(this.pulsePhase * 2) * 10}%)`
