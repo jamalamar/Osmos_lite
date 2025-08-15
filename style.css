@@ -201,3 +201,33 @@ body {
 .hidden {
     display: none;
 }
+
+.signature {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: 1px solid rgba(139, 195, 74, 0.3);
+    z-index: 1000;
+    pointer-events: all;
+}
+
+.signature p {
+    margin: 0;
+}
+
+.signature a {
+    color: #9c27b0;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.signature a:hover {
+    color: #ba68c8;
+    text-shadow: 0 0 10px rgba(156, 39, 176, 0.6);
+}
