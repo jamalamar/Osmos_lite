@@ -21,13 +21,13 @@ class Game {
             y: 0,
             zoom: 1,
             targetZoom: 1,
-            minZoom: 0.2,
-            maxZoom: 2
+            minZoom: 0.5,
+            maxZoom: 3
         };
         
-        // World size (10x larger)
-        this.worldWidth = window.innerWidth * 10;
-        this.worldHeight = window.innerHeight * 10;
+        // World size (3x larger for tighter gameplay)
+        this.worldWidth = window.innerWidth * 3;
+        this.worldHeight = window.innerHeight * 3;
         
         this.setupCanvas();
         this.setupEventListeners();
@@ -200,8 +200,8 @@ class Game {
         // Reset camera
         this.camera.x = this.worldWidth / 2;
         this.camera.y = this.worldHeight / 2;
-        this.camera.zoom = 0.5;
-        this.camera.targetZoom = 0.5;
+        this.camera.zoom = 0.8;
+        this.camera.targetZoom = 0.8;
         
         // Place player at world center
         const centerX = this.worldWidth / 2;
@@ -210,18 +210,22 @@ class Game {
         this.player = new Cell(centerX, centerY, 100, 0, 0, 'player');
         this.cells.push(this.player);
 
-        // Much more cells with varied sizes
-        const cellCount = 150 + levelNum * 30;
+        // Balanced cell count for better performance
+        const cellCount = 300 + levelNum * 50;
         const hunterCount = Math.floor(levelNum * 3);
         
-        // Create size distribution
+        // Optimized size distribution with fewer giant cells
         const sizeDistribution = [
-            { min: 5, max: 20, count: cellCount * 0.3 },    // Tiny cells
-            { min: 20, max: 50, count: cellCount * 0.25 },  // Small cells
-            { min: 50, max: 100, count: cellCount * 0.2 },  // Medium cells
-            { min: 100, max: 200, count: cellCount * 0.15 }, // Large cells
-            { min: 200, max: 400, count: cellCount * 0.08 }, // Huge cells
-            { min: 400, max: 800, count: cellCount * 0.02 }  // Giant cells
+            { min: 1, max: 5, count: cellCount * 0.20 },      // Microscopic cells
+            { min: 5, max: 15, count: cellCount * 0.18 },     // Tiny cells
+            { min: 15, max: 30, count: cellCount * 0.15 },    // Very small cells
+            { min: 30, max: 60, count: cellCount * 0.13 },    // Small cells
+            { min: 60, max: 120, count: cellCount * 0.12 },   // Medium cells
+            { min: 120, max: 250, count: cellCount * 0.10 },  // Large cells
+            { min: 250, max: 500, count: cellCount * 0.07 },  // Huge cells
+            { min: 500, max: 1000, count: cellCount * 0.03 }, // Giant cells
+            { min: 1000, max: 1500, count: cellCount * 0.015 }, // Massive cells
+            { min: 1500, max: 2500, count: cellCount * 0.005 }  // Colossal cells
         ];
         
         let cellsCreated = 0;
@@ -230,16 +234,21 @@ class Game {
                 let x, y, validPosition;
                 let attempts = 0;
                 
+                // Larger cells need more space
+                const minDistance = Math.max(150, size.min * 0.3);
+                
                 do {
-                    x = Utils.random(200, this.worldWidth - 200);
-                    y = Utils.random(200, this.worldHeight - 200);
-                    validPosition = Utils.distance(x, y, centerX, centerY) > 300;
+                    x = Utils.random(50, this.worldWidth - 50);
+                    y = Utils.random(50, this.worldHeight - 50);
+                    validPosition = Utils.distance(x, y, centerX, centerY) > minDistance;
                     attempts++;
                 } while (!validPosition && attempts < 50);
                 
                 const mass = Utils.random(size.min, size.max);
-                const vx = Utils.random(-50, 50);
-                const vy = Utils.random(-50, 50);
+                // Larger cells move slower
+                const speedFactor = Math.max(0.1, Math.min(1, 100 / mass));
+                const vx = Utils.random(-50, 50) * speedFactor;
+                const vy = Utils.random(-50, 50) * speedFactor;
                 const type = cellsCreated < hunterCount ? 'hunter' : 'passive';
                 
                 this.cells.push(new Cell(x, y, mass, vx, vy, type));
@@ -247,21 +256,79 @@ class Game {
             }
         }
         
-        // Add clusters of tiny cells for visual interest
-        for (let cluster = 0; cluster < 10; cluster++) {
-            const clusterX = Utils.random(500, this.worldWidth - 500);
-            const clusterY = Utils.random(500, this.worldHeight - 500);
+        // Add clusters of microscopic cells (reduced for performance)
+        for (let cluster = 0; cluster < 15; cluster++) {
+            const clusterX = Utils.random(100, this.worldWidth - 100);
+            const clusterY = Utils.random(100, this.worldHeight - 100);
+            const clusterType = Math.random() > 0.5 ? 'spiral' : 'explosion';
             
-            for (let i = 0; i < 20; i++) {
-                const angle = (Math.PI * 2 * i) / 20;
-                const radius = Utils.random(50, 200);
-                const x = clusterX + Math.cos(angle) * radius;
-                const y = clusterY + Math.sin(angle) * radius;
-                const mass = Utils.random(3, 15);
+            if (clusterType === 'spiral') {
+                // Spiral pattern (fewer cells)
+                for (let i = 0; i < 20; i++) {
+                    const angle = (Math.PI * 2 * i) / 10;
+                    const radius = i * 8;
+                    const x = clusterX + Math.cos(angle) * radius;
+                    const y = clusterY + Math.sin(angle) * radius;
+                    const mass = Utils.random(0.5, 3);
+                    
+                    this.cells.push(new Cell(x, y, mass, 
+                        Utils.random(-20, 20), 
+                        Utils.random(-20, 20), 
+                        'passive'));
+                }
+            } else {
+                // Explosion pattern (fewer cells)
+                for (let i = 0; i < 20; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Utils.random(20, 300);
+                    const x = clusterX + Math.cos(angle) * radius;
+                    const y = clusterY + Math.sin(angle) * radius;
+                    const mass = Utils.random(1, 8);
+                    
+                    this.cells.push(new Cell(x, y, mass, 
+                        Math.cos(angle) * Utils.random(10, 40), 
+                        Math.sin(angle) * Utils.random(10, 40), 
+                        'passive'));
+                }
+            }
+        }
+        
+        // Add some super massive "asteroid field" areas
+        for (let field = 0; field < 3; field++) {
+            const fieldX = Utils.random(300, this.worldWidth - 300);
+            const fieldY = Utils.random(300, this.worldHeight - 300);
+            
+            // Central massive body (smaller for better performance)
+            this.cells.push(new Cell(fieldX, fieldY, 
+                Utils.random(800, 1500), 0, 0, 'passive'));
+            
+            // Orbiting medium bodies (fewer)
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI * 2 * i) / 6;
+                const orbitRadius = Utils.random(200, 350);
+                const x = fieldX + Math.cos(angle) * orbitRadius;
+                const y = fieldY + Math.sin(angle) * orbitRadius;
+                const mass = Utils.random(200, 500);
                 
-                this.cells.push(new Cell(x, y, mass, 
-                    Utils.random(-10, 10), 
-                    Utils.random(-10, 10), 
+                // Give them orbital velocity
+                const orbitSpeed = 20;
+                this.cells.push(new Cell(x, y, mass,
+                    -Math.sin(angle) * orbitSpeed,
+                    Math.cos(angle) * orbitSpeed,
+                    'passive'));
+            }
+            
+            // Debris field (fewer for performance)
+            for (let i = 0; i < 50; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Utils.random(50, 400);
+                const x = fieldX + Math.cos(angle) * radius;
+                const y = fieldY + Math.sin(angle) * radius;
+                const mass = Utils.random(0.5, 20);
+                
+                this.cells.push(new Cell(x, y, mass,
+                    Utils.random(-15, 15),
+                    Utils.random(-15, 15),
                     'passive'));
             }
         }
@@ -282,7 +349,23 @@ class Game {
             this.camera.zoom += (this.camera.targetZoom - this.camera.zoom) * 0.1;
         }
 
+        // Dynamic culling based on player size
+        const playerMass = this.player ? this.player.mass : 100;
+        const cullThreshold = playerMass * 0.001; // Ignore cells smaller than 0.1% of player
+        const updateRadius = Math.max(2000, playerMass * 5); // Only update nearby cells
+        
         for (let cell of this.cells) {
+            // Skip updating very tiny cells when player is large (performance)
+            if (cell !== this.player && playerMass > 1000 && cell.mass < cullThreshold) {
+                continue;
+            }
+            
+            // Only update cells within reasonable distance when player is huge
+            if (cell !== this.player && playerMass > 2000) {
+                const dist = Utils.distance(cell.x, cell.y, this.player.x, this.player.y);
+                if (dist > updateRadius) continue;
+            }
+            
             cell.update(deltaTime, this.worldWidth, this.worldHeight);
             
             if (cell.type === 'hunter') {
@@ -295,9 +378,53 @@ class Game {
         }
 
         Physics.applyGravity(this.cells, 0.00005);
+        
+        // Player gravitational pull on smaller cells
+        if (this.player && this.player.mass > 50) {
+            const pullRadius = this.player.radius * 4;
+            const pullStrength = 0.0003 * Math.log(this.player.mass);
+            
+            for (let cell of this.cells) {
+                if (cell === this.player || cell.type === 'ejected') continue;
+                
+                // Only pull cells that are smaller
+                if (cell.mass < this.player.mass * 0.8) {
+                    const dx = this.player.x - cell.x;
+                    const dy = this.player.y - cell.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < pullRadius && dist > this.player.radius) {
+                        // Stronger pull for smaller cells
+                        const sizeFactor = Math.max(0.5, Math.min(2, this.player.mass / cell.mass / 10));
+                        const force = pullStrength * sizeFactor * (1 - dist / pullRadius);
+                        
+                        cell.vx += (dx / dist) * force * this.player.mass;
+                        cell.vy += (dy / dist) * force * this.player.mass;
+                    }
+                }
+            }
+        }
 
-        const collisions = Physics.checkCollisions(this.cells);
+        // Filter cells for collision detection when player is large
+        let collisionCells = this.cells;
+        if (playerMass > 1000) {
+            // Only check collisions for significant cells
+            collisionCells = this.cells.filter(c => 
+                c === this.player || 
+                c.mass > cullThreshold ||
+                Utils.distance(c.x, c.y, this.player.x, this.player.y) < 1000
+            );
+        }
+
+        const collisions = Physics.checkCollisions(collisionCells);
         for (let [cell1, cell2] of collisions) {
+            // Skip collision if both cells are too small relative to player
+            if (playerMass > 2000 && 
+                cell1 !== this.player && cell2 !== this.player &&
+                cell1.mass < cullThreshold && cell2.mass < cullThreshold) {
+                continue;
+            }
+            
             const absorbed = Physics.handleAbsorption(cell1, cell2);
             
             if (absorbed) {
@@ -332,13 +459,13 @@ class Game {
 
     render() {
         if (this.gameState === 'menu') {
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             return;
         }
         
-        // Clear with fade effect
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        // Clear with reduced fade effect (less motion blur)
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Save context and apply camera transform
@@ -374,13 +501,30 @@ class Game {
             }
         }
 
-        // Draw danger zone around player
-        if (this.player) {
-            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        // Draw gravitational field around player
+        if (this.player && this.player.mass > 50) {
+            const pullRadius = this.player.radius * 4;
+            
+            // Gravitational field gradient
+            const gradient = this.ctx.createRadialGradient(
+                this.player.x, this.player.y, this.player.radius,
+                this.player.x, this.player.y, pullRadius
+            );
+            gradient.addColorStop(0, 'rgba(139, 195, 74, 0)');
+            gradient.addColorStop(0.5, 'rgba(139, 195, 74, 0.05)');
+            gradient.addColorStop(1, 'rgba(139, 195, 74, 0)');
+            
+            this.ctx.fillStyle = gradient;
+            this.ctx.beginPath();
+            this.ctx.arc(this.player.x, this.player.y, pullRadius, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Gravitational field border
+            this.ctx.strokeStyle = 'rgba(139, 195, 74, 0.15)';
             this.ctx.lineWidth = 1 / this.camera.zoom;
             this.ctx.setLineDash([5, 10]);
             this.ctx.beginPath();
-            this.ctx.arc(this.player.x, this.player.y, 200, 0, Math.PI * 2);
+            this.ctx.arc(this.player.x, this.player.y, pullRadius, 0, Math.PI * 2);
             this.ctx.stroke();
             this.ctx.setLineDash([]);
         }
@@ -395,7 +539,7 @@ class Game {
     }
     
     drawGrid() {
-        const gridSize = 500;
+        const gridSize = 200;
         const viewBounds = this.getViewBounds();
         
         this.ctx.strokeStyle = 'rgba(100, 50, 50, 0.1)';
@@ -451,30 +595,53 @@ class Game {
         this.ctx.strokeStyle = 'rgba(139, 195, 74, 0.5)';
         this.ctx.strokeRect(mapX, mapY, mapSize, mapSize);
         
-        // Draw cells on minimap
+        // Draw cells on minimap (optimize for massive cell counts)
         const scale = mapSize / Math.max(this.worldWidth, this.worldHeight);
         
-        for (let cell of this.cells) {
+        // Sort cells by size to draw big ones first
+        const sortedCells = [...this.cells].sort((a, b) => b.mass - a.mass);
+        
+        for (let cell of sortedCells) {
+            // Skip microscopic cells on minimap unless they're the player
+            if (cell.mass < 10 && cell !== this.player) continue;
+            
             const miniX = mapX + (cell.x * scale);
             const miniY = mapY + (cell.y * scale);
-            const miniRadius = Math.max(1, cell.radius * scale);
+            const miniRadius = Math.max(0.5, cell.radius * scale);
             
             if (cell === this.player) {
                 this.ctx.fillStyle = '#8bc34a';
+                this.ctx.strokeStyle = '#fff';
+                this.ctx.lineWidth = 1;
             } else if (cell.type === 'hunter') {
                 this.ctx.fillStyle = 'rgba(150, 50, 200, 0.8)';
+            } else if (cell.mass > 1000) {
+                // Colossal cells - bright red
+                this.ctx.fillStyle = 'rgba(255, 50, 50, 0.9)';
+            } else if (cell.mass > 500) {
+                // Giant cells - orange
+                this.ctx.fillStyle = 'rgba(255, 150, 50, 0.8)';
+            } else if (cell.mass > 200) {
+                // Large cells - yellow
+                this.ctx.fillStyle = 'rgba(255, 255, 100, 0.7)';
             } else {
+                // Normal cells - standard red
                 this.ctx.fillStyle = 'rgba(255, 100, 100, 0.6)';
             }
             
             this.ctx.beginPath();
             this.ctx.arc(miniX, miniY, miniRadius, 0, Math.PI * 2);
             this.ctx.fill();
+            
+            if (cell === this.player) {
+                this.ctx.stroke();
+            }
         }
         
         // Draw view rectangle
         const viewBounds = this.getViewBounds();
         this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        this.ctx.lineWidth = 1;
         this.ctx.strokeRect(
             mapX + viewBounds.left * scale,
             mapY + viewBounds.top * scale,
