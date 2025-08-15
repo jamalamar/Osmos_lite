@@ -209,23 +209,38 @@ class Game {
         
         this.player = new Cell(centerX, centerY, 100, 0, 0, 'player');
         this.cells.push(this.player);
+        
+        // Add immediate threats - red cells larger than player
+        for (let i = 0; i < 8 + levelNum * 2; i++) {
+            const angle = (Math.PI * 2 * i) / (8 + levelNum * 2);
+            const distance = Utils.random(300, 600);
+            const x = centerX + Math.cos(angle) * distance;
+            const y = centerY + Math.sin(angle) * distance;
+            const mass = Utils.random(150, 400);
+            
+            this.cells.push(new Cell(x, y, mass,
+                Utils.random(-30, 30),
+                Utils.random(-30, 30),
+                i < 3 ? 'hunter' : 'passive'));
+        }
 
-        // Balanced cell count for better performance
-        const cellCount = 300 + levelNum * 50;
+        // More cells with better distribution for longer gameplay
+        const cellCount = 450 + levelNum * 70;
         const hunterCount = Math.floor(levelNum * 3);
         
-        // Optimized size distribution with fewer giant cells
+        // Balanced distribution with more large threats
         const sizeDistribution = [
             { min: 1, max: 5, count: cellCount * 0.20 },      // Microscopic cells
             { min: 5, max: 15, count: cellCount * 0.18 },     // Tiny cells
             { min: 15, max: 30, count: cellCount * 0.15 },    // Very small cells
-            { min: 30, max: 60, count: cellCount * 0.13 },    // Small cells
-            { min: 60, max: 120, count: cellCount * 0.12 },   // Medium cells
-            { min: 120, max: 250, count: cellCount * 0.10 },  // Large cells
-            { min: 250, max: 500, count: cellCount * 0.07 },  // Huge cells
-            { min: 500, max: 1000, count: cellCount * 0.03 }, // Giant cells
-            { min: 1000, max: 1500, count: cellCount * 0.015 }, // Massive cells
-            { min: 1500, max: 2500, count: cellCount * 0.005 }  // Colossal cells
+            { min: 30, max: 60, count: cellCount * 0.12 },    // Small cells
+            { min: 60, max: 120, count: cellCount * 0.10 },   // Medium cells
+            { min: 120, max: 300, count: cellCount * 0.08 },  // Large cells (increased)
+            { min: 300, max: 600, count: cellCount * 0.07 },  // Huge cells (increased)
+            { min: 600, max: 1200, count: cellCount * 0.05 }, // Giant cells (increased)
+            { min: 1200, max: 2500, count: cellCount * 0.03 }, // Massive cells (increased)
+            { min: 2500, max: 5000, count: cellCount * 0.015 }, // Colossal cells (NEW)
+            { min: 5000, max: 10000, count: cellCount * 0.005 } // Titan cells (NEW)
         ];
         
         let cellsCreated = 0;
@@ -256,79 +271,89 @@ class Game {
             }
         }
         
-        // Add clusters of microscopic cells (reduced for performance)
-        for (let cluster = 0; cluster < 15; cluster++) {
+        // Add MANY clusters of small cells throughout the world
+        for (let cluster = 0; cluster < 25; cluster++) {
             const clusterX = Utils.random(100, this.worldWidth - 100);
             const clusterY = Utils.random(100, this.worldHeight - 100);
-            const clusterType = Math.random() > 0.5 ? 'spiral' : 'explosion';
+            const clusterType = Math.random() > 0.3 ? 'dense' : 'spiral';
             
-            if (clusterType === 'spiral') {
-                // Spiral pattern (fewer cells)
-                for (let i = 0; i < 20; i++) {
-                    const angle = (Math.PI * 2 * i) / 10;
-                    const radius = i * 8;
+            if (clusterType === 'dense') {
+                // Dense cloud of small cells
+                for (let i = 0; i < 40; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Utils.random(10, 150);
                     const x = clusterX + Math.cos(angle) * radius;
                     const y = clusterY + Math.sin(angle) * radius;
-                    const mass = Utils.random(0.5, 3);
+                    const mass = Utils.random(2, 20);
                     
                     this.cells.push(new Cell(x, y, mass, 
-                        Utils.random(-20, 20), 
-                        Utils.random(-20, 20), 
+                        Utils.random(-15, 15), 
+                        Utils.random(-15, 15), 
                         'passive'));
                 }
             } else {
-                // Explosion pattern (fewer cells)
-                for (let i = 0; i < 20; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const radius = Utils.random(20, 300);
+                // Spiral pattern
+                for (let i = 0; i < 30; i++) {
+                    const angle = (Math.PI * 2 * i) / 10;
+                    const radius = i * 6;
                     const x = clusterX + Math.cos(angle) * radius;
                     const y = clusterY + Math.sin(angle) * radius;
-                    const mass = Utils.random(1, 8);
+                    const mass = Utils.random(3, 15);
                     
                     this.cells.push(new Cell(x, y, mass, 
-                        Math.cos(angle) * Utils.random(10, 40), 
-                        Math.sin(angle) * Utils.random(10, 40), 
+                        Utils.random(-10, 10), 
+                        Utils.random(-10, 10), 
                         'passive'));
                 }
             }
         }
         
-        // Add some super massive "asteroid field" areas
-        for (let field = 0; field < 3; field++) {
-            const fieldX = Utils.random(300, this.worldWidth - 300);
-            const fieldY = Utils.random(300, this.worldHeight - 300);
+        // Add scattered small cells to fill empty spaces
+        for (let i = 0; i < 200; i++) {
+            const x = Utils.random(50, this.worldWidth - 50);
+            const y = Utils.random(50, this.worldHeight - 50);
+            const mass = Utils.random(5, 30);
             
-            // Central massive body (smaller for better performance)
+            this.cells.push(new Cell(x, y, mass,
+                Utils.random(-20, 20),
+                Utils.random(-20, 20),
+                'passive'));
+        }
+        
+        // Add challenging zones with larger cells
+        for (let field = 0; field < 5; field++) {
+            const fieldX = Utils.random(200, this.worldWidth - 200);
+            const fieldY = Utils.random(200, this.worldHeight - 200);
+            
+            // Central large body (bigger challenge)
             this.cells.push(new Cell(fieldX, fieldY, 
-                Utils.random(800, 1500), 0, 0, 'passive'));
+                Utils.random(1000, 3000), 0, 0, 'passive'));
             
-            // Orbiting medium bodies (fewer)
-            for (let i = 0; i < 6; i++) {
-                const angle = (Math.PI * 2 * i) / 6;
-                const orbitRadius = Utils.random(200, 350);
+            // Ring of medium-large bodies
+            for (let i = 0; i < 12; i++) {
+                const angle = (Math.PI * 2 * i) / 12;
+                const orbitRadius = Utils.random(150, 300);
                 const x = fieldX + Math.cos(angle) * orbitRadius;
                 const y = fieldY + Math.sin(angle) * orbitRadius;
-                const mass = Utils.random(200, 500);
+                const mass = Utils.random(100, 300);
                 
-                // Give them orbital velocity
-                const orbitSpeed = 20;
                 this.cells.push(new Cell(x, y, mass,
-                    -Math.sin(angle) * orbitSpeed,
-                    Math.cos(angle) * orbitSpeed,
+                    Utils.random(-10, 10),
+                    Utils.random(-10, 10),
                     'passive'));
             }
             
-            // Debris field (fewer for performance)
-            for (let i = 0; i < 50; i++) {
+            // Dense field of tiny cells (food)
+            for (let i = 0; i < 60; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const radius = Utils.random(50, 400);
+                const radius = Utils.random(20, 250);
                 const x = fieldX + Math.cos(angle) * radius;
                 const y = fieldY + Math.sin(angle) * radius;
-                const mass = Utils.random(0.5, 20);
+                const mass = Utils.random(2, 15);
                 
                 this.cells.push(new Cell(x, y, mass,
-                    Utils.random(-15, 15),
-                    Utils.random(-15, 15),
+                    Utils.random(-10, 10),
+                    Utils.random(-10, 10),
                     'passive'));
             }
         }
@@ -615,18 +640,27 @@ class Game {
                 this.ctx.lineWidth = 1;
             } else if (cell.type === 'hunter') {
                 this.ctx.fillStyle = 'rgba(150, 50, 200, 0.8)';
-            } else if (cell.mass > 1000) {
+            } else if (cell.mass > 5000) {
+                // Titan cells - dark red with white border
+                this.ctx.fillStyle = 'rgba(140, 0, 0, 1)';
+            } else if (cell.mass > 2500) {
                 // Colossal cells - bright red
-                this.ctx.fillStyle = 'rgba(255, 50, 50, 0.9)';
+                this.ctx.fillStyle = 'rgba(255, 30, 30, 0.9)';
+            } else if (cell.mass > 1000) {
+                // Massive cells - red
+                this.ctx.fillStyle = 'rgba(255, 60, 60, 0.9)';
             } else if (cell.mass > 500) {
-                // Giant cells - orange
-                this.ctx.fillStyle = 'rgba(255, 150, 50, 0.8)';
+                // Giant cells - orange-red
+                this.ctx.fillStyle = 'rgba(255, 100, 50, 0.8)';
             } else if (cell.mass > 200) {
-                // Large cells - yellow
-                this.ctx.fillStyle = 'rgba(255, 255, 100, 0.7)';
+                // Large cells - orange
+                this.ctx.fillStyle = 'rgba(255, 150, 100, 0.7)';
+            } else if (cell.mass > this.player.mass) {
+                // Threatening cells - red tint
+                this.ctx.fillStyle = 'rgba(255, 100, 100, 0.7)';
             } else {
-                // Normal cells - standard red
-                this.ctx.fillStyle = 'rgba(255, 100, 100, 0.6)';
+                // Edible cells - yellow-green
+                this.ctx.fillStyle = 'rgba(200, 255, 100, 0.6)';
             }
             
             this.ctx.beginPath();

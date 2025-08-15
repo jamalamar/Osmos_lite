@@ -12,50 +12,51 @@ class MapSystem {
     generateMapLevels() {
         // Get center position (will be set when canvas is initialized)
         const centerX = window.innerWidth / 2;
-        const yStart = 650;
+        const yStart = window.innerHeight - 100;
+        const ySpacing = 50; // Reduced spacing for better fit
         
         const levels = [
             // Entry Point - Respiratory System
             { id: 0, x: centerX, y: yStart, type: 'normal', connections: [1], branch: 'respiratory', name: 'Nasal Cavity', organ: 'nose' },
-            { id: 1, x: centerX, y: yStart - 70, type: 'normal', connections: [2], branch: 'respiratory', name: 'Throat', organ: 'throat' },
-            { id: 2, x: centerX, y: yStart - 140, type: 'normal', connections: [3, 4], branch: 'respiratory', name: 'Trachea', organ: 'trachea' },
+            { id: 1, x: centerX, y: yStart - ySpacing, type: 'normal', connections: [2], branch: 'respiratory', name: 'Throat', organ: 'throat' },
+            { id: 2, x: centerX, y: yStart - ySpacing * 2, type: 'normal', connections: [3, 4], branch: 'respiratory', name: 'Trachea', organ: 'trachea' },
             
             // Lungs Branch
-            { id: 3, x: centerX - 100, y: yStart - 210, type: 'normal', connections: [5], branch: 'lungs', name: 'Left Lung', organ: 'lung' },
-            { id: 4, x: centerX + 100, y: yStart - 210, type: 'normal', connections: [6], branch: 'lungs', name: 'Right Lung', organ: 'lung' },
-            { id: 5, x: centerX - 120, y: yStart - 280, type: 'challenge', connections: [7], branch: 'lungs', name: 'Alveoli', organ: 'alveoli' },
-            { id: 6, x: centerX + 120, y: yStart - 280, type: 'normal', connections: [7], branch: 'lungs', name: 'Bronchioles', organ: 'bronchi' },
+            { id: 3, x: centerX - 80, y: yStart - ySpacing * 3, type: 'normal', connections: [5], branch: 'lungs', name: 'Left Lung', organ: 'lung' },
+            { id: 4, x: centerX + 80, y: yStart - ySpacing * 3, type: 'normal', connections: [6], branch: 'lungs', name: 'Right Lung', organ: 'lung' },
+            { id: 5, x: centerX - 100, y: yStart - ySpacing * 4, type: 'challenge', connections: [7], branch: 'lungs', name: 'Alveoli', organ: 'alveoli' },
+            { id: 6, x: centerX + 100, y: yStart - ySpacing * 4, type: 'normal', connections: [7], branch: 'lungs', name: 'Bronchioles', organ: 'bronchi' },
             
             // Bloodstream
-            { id: 7, x: centerX, y: yStart - 350, type: 'normal', connections: [8], branch: 'blood', name: 'Bloodstream', organ: 'blood' },
+            { id: 7, x: centerX, y: yStart - ySpacing * 5, type: 'normal', connections: [8], branch: 'blood', name: 'Bloodstream', organ: 'blood' },
             
             // Heart - First Boss
-            { id: 8, x: centerX, y: yStart - 420, type: 'boss', connections: [9, 10, 11], branch: 'cardiovascular', name: 'HEART', organ: 'heart' },
+            { id: 8, x: centerX, y: yStart - ySpacing * 6, type: 'boss', connections: [9, 10, 11], branch: 'cardiovascular', name: 'HEART', organ: 'heart' },
             
             // Three paths from heart
-            { id: 9, x: centerX - 150, y: yStart - 490, type: 'normal', connections: [12], branch: 'digestive', name: 'Stomach', organ: 'stomach' },
-            { id: 10, x: centerX, y: yStart - 490, type: 'challenge', connections: [13], branch: 'immune', name: 'Lymph Node', organ: 'lymph' },
-            { id: 11, x: centerX + 150, y: yStart - 490, type: 'normal', connections: [14], branch: 'filtration', name: 'Liver', organ: 'liver' },
+            { id: 9, x: centerX - 120, y: yStart - ySpacing * 7, type: 'normal', connections: [12], branch: 'digestive', name: 'Stomach', organ: 'stomach' },
+            { id: 10, x: centerX, y: yStart - ySpacing * 7, type: 'challenge', connections: [13], branch: 'immune', name: 'Lymph Node', organ: 'lymph' },
+            { id: 11, x: centerX + 120, y: yStart - ySpacing * 7, type: 'normal', connections: [14], branch: 'filtration', name: 'Liver', organ: 'liver' },
             
             // Digestive path
-            { id: 12, x: centerX - 150, y: yStart - 560, type: 'normal', connections: [15], branch: 'digestive', name: 'Small Intestine', organ: 'intestine' },
+            { id: 12, x: centerX - 120, y: yStart - ySpacing * 8, type: 'normal', connections: [15], branch: 'digestive', name: 'Small Intestine', organ: 'intestine' },
             
             // Immune challenge
-            { id: 13, x: centerX, y: yStart - 560, type: 'challenge', connections: [15], branch: 'immune', name: 'Spleen', organ: 'spleen' },
+            { id: 13, x: centerX, y: yStart - ySpacing * 8, type: 'challenge', connections: [15], branch: 'immune', name: 'Spleen', organ: 'spleen' },
             
             // Filtration path
-            { id: 14, x: centerX + 150, y: yStart - 560, type: 'challenge', connections: [15], branch: 'filtration', name: 'Kidneys', organ: 'kidney' },
+            { id: 14, x: centerX + 120, y: yStart - ySpacing * 8, type: 'challenge', connections: [15], branch: 'filtration', name: 'Kidneys', organ: 'kidney' },
             
             // Paths converge - Nervous System
-            { id: 15, x: centerX, y: yStart - 630, type: 'normal', connections: [16], branch: 'nervous', name: 'Spinal Cord', organ: 'spine' },
-            { id: 16, x: centerX, y: yStart - 700, type: 'normal', connections: [17, 18], branch: 'nervous', name: 'Brain Stem', organ: 'brainstem' },
+            { id: 15, x: centerX, y: yStart - ySpacing * 9, type: 'normal', connections: [16], branch: 'nervous', name: 'Spinal Cord', organ: 'spine' },
+            { id: 16, x: centerX, y: yStart - ySpacing * 10, type: 'normal', connections: [17, 18], branch: 'nervous', name: 'Brain Stem', organ: 'brainstem' },
             
             // Final branches
-            { id: 17, x: centerX - 80, y: yStart - 770, type: 'challenge', connections: [19], branch: 'nervous', name: 'Cerebellum', organ: 'cerebellum' },
-            { id: 18, x: centerX + 80, y: yStart - 770, type: 'normal', connections: [19], branch: 'nervous', name: 'Frontal Lobe', organ: 'brain' },
+            { id: 17, x: centerX - 70, y: yStart - ySpacing * 11, type: 'challenge', connections: [19], branch: 'nervous', name: 'Cerebellum', organ: 'cerebellum' },
+            { id: 18, x: centerX + 70, y: yStart - ySpacing * 11, type: 'normal', connections: [19], branch: 'nervous', name: 'Frontal Lobe', organ: 'brain' },
             
             // Final Boss
-            { id: 19, x: centerX, y: yStart - 840, type: 'boss', connections: [], branch: 'nervous', name: 'BRAIN CORE', organ: 'brain' }
+            { id: 19, x: centerX, y: yStart - ySpacing * 12, type: 'boss', connections: [], branch: 'nervous', name: 'BRAIN CORE', organ: 'brain' }
         ];
         
         return levels;
@@ -90,18 +91,14 @@ class MapSystem {
     }
 
     getCameraOffset() {
-        // Center camera on current progress
-        const currentNode = this.levels[this.currentLevel];
-        if (!currentNode) return 0;
-        
-        const screenCenter = this.canvas.height / 2;
-        return Math.max(0, screenCenter - currentNode.y);
+        // Show entire map instead of following current level
+        return 0;
     }
 
     handleNodeClick(x, y) {
         for (let level of this.levels) {
             const distance = Math.sqrt((x - level.x) ** 2 + (y - level.y) ** 2);
-            if (distance < 25) {
+            if (distance < 20) {
                 if (this.unlockedLevels.includes(level.id)) {
                     this.selectedNode = level;
                     return level;
@@ -231,20 +228,20 @@ class MapSystem {
             // Get organ-specific color
             let organColor = this.getOrganColor(level.organ, level.branch);
             
-            // Node glow effect
+            // Node glow effect (smaller)
             if (isUnlocked) {
                 const gradient = this.ctx.createRadialGradient(
                     level.x, level.y, 0,
-                    level.x, level.y, 35
+                    level.x, level.y, 25
                 );
                 gradient.addColorStop(0, `rgba(${organColor.r}, ${organColor.g}, ${organColor.b}, 0.4)`);
                 gradient.addColorStop(1, `rgba(${organColor.r}, ${organColor.g}, ${organColor.b}, 0)`);
                 this.ctx.fillStyle = gradient;
-                this.ctx.fillRect(level.x - 35, level.y - 35, 70, 70);
+                this.ctx.fillRect(level.x - 25, level.y - 25, 50, 50);
             }
             
-            // Draw organ shape based on type
-            const radius = level.type === 'boss' ? 28 : 22;
+            // Draw organ shape based on type (smaller nodes)
+            const radius = level.type === 'boss' ? 20 : 15;
             
             // Outer ring for bosses
             if (level.type === 'boss') {
@@ -283,11 +280,11 @@ class MapSystem {
             let icon = this.getOrganIcon(level.organ, level.type);
             this.ctx.fillText(icon, level.x, level.y);
             
-            // Level name
+            // Level name (smaller font)
             if (isUnlocked) {
-                this.ctx.font = level.type === 'boss' ? 'bold 14px Arial' : '12px Arial';
+                this.ctx.font = level.type === 'boss' ? 'bold 11px Arial' : '10px Arial';
                 this.ctx.fillStyle = 'rgba(255, 220, 220, 0.9)';
-                this.ctx.fillText(level.name.toUpperCase(), level.x, level.y + (radius + 15));
+                this.ctx.fillText(level.name.toUpperCase(), level.x, level.y + (radius + 12));
             }
         }
     }
