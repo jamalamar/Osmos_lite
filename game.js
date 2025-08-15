@@ -768,7 +768,14 @@ class Game {
     }
 
     restart() {
+        // Hide game over dialog
+        document.getElementById('gameOver').classList.add('hidden');
+        // Show start screen
         document.getElementById('startScreen').classList.remove('hidden');
+        // Hide map screen if it's visible
+        document.getElementById('mapScreen').classList.add('hidden');
+        
+        // Reset game state
         this.gameState = 'menu';
         this.gameStarted = false;
         this.cells = [];
@@ -776,6 +783,17 @@ class Game {
         this.player = null;
         this.score = 0;
         this.level = 1;
+        this.currentJourneyLevel = null;
+        
+        // Reset camera
+        this.camera.zoom = 0.8;
+        this.camera.targetZoom = 0.8;
+        
+        // Cancel map animation if running
+        if (this.mapAnimationId) {
+            cancelAnimationFrame(this.mapAnimationId);
+            this.mapAnimationId = null;
+        }
     }
 
     gameLoop(currentTime) {
