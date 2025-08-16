@@ -25,6 +25,12 @@ class Game {
             maxZoom: 3
         };
         
+        // Continuous shooting
+        this.isShooting = false;
+        this.shootTarget = { x: 0, y: 0 };
+        this.shootTimer = 0;
+        this.shootInterval = 100; // milliseconds between shots
+        
         // World size (3x larger for tighter gameplay)
         this.worldWidth = window.innerWidth * 3;
         this.worldHeight = window.innerHeight * 3;
@@ -45,7 +51,8 @@ class Game {
     }
 
     setupEventListeners() {
-        this.canvas.addEventListener('click', (e) => {
+        // Mouse down - start shooting
+        this.canvas.addEventListener('mousedown', (e) => {
             if (this.gameState !== 'playing' || !this.player) return;
             
             const rect = this.canvas.getBoundingClientRect();
@@ -53,20 +60,37 @@ class Game {
             const screenY = e.clientY - rect.top;
             
             // Convert screen coordinates to world coordinates
-            const worldX = (screenX - this.canvas.width/2) / this.camera.zoom + this.camera.x;
-            const worldY = (screenY - this.canvas.height/2) / this.camera.zoom + this.camera.y;
+            this.shootTarget.x = (screenX - this.canvas.width/2) / this.camera.zoom + this.camera.x;
+            this.shootTarget.y = (screenY - this.canvas.height/2) / this.camera.zoom + this.camera.y;
             
-            // Eject multiple masses for more activity
-            const numEjections = 3;
-            for (let i = 0; i < numEjections; i++) {
-                const angle = (Math.atan2(worldY - this.player.y, worldX - this.player.x) + 
-                              (i - 1) * 0.1);
-                const ejected = this.player.ejectMassWithAngle(angle, 8 + i * 2);
-                if (ejected) {
-                    this.cells.push(ejected);
-                }
-            }
-            this.updateUI();
+            this.isShooting = true;
+            this.shootTimer = 0;
+            
+            // Shoot immediately on click
+            this.shoot();
+        });
+        
+        // Mouse move - update target while shooting
+        this.canvas.addEventListener('mousemove', (e) => {
+            if (this.gameState !== 'playing' || !this.player || !this.isShooting) return;
+            
+            const rect = this.canvas.getBoundingClientRect();
+            const screenX = e.clientX - rect.left;
+            const screenY = e.clientY - rect.top;
+            
+            // Update shoot target
+            this.shootTarget.x = (screenX - this.canvas.width/2) / this.camera.zoom + this.camera.x;
+            this.shootTarget.y = (screenY - this.canvas.height/2) / this.camera.zoom + this.camera.y;
+        });
+        
+        // Mouse up - stop shooting
+        this.canvas.addEventListener('mouseup', () => {
+            this.isShooting = false;
+        });
+        
+        // Mouse leave - stop shooting if cursor leaves canvas
+        this.canvas.addEventListener('mouseleave', () => {
+            this.isShooting = false;
         });
         
         // Add mouse wheel zoom
@@ -362,8 +386,33 @@ class Game {
         document.getElementById('gameOver').classList.add('hidden');
     }
 
+    shoot() {
+        if (!this.player || this.player.mass <= 20) return;
+        
+        // Eject multiple masses for more activity
+        const numEjections = 3;
+        for (let i = 0; i < numEjections; i++) {
+            const angle = (Math.atan2(this.shootTarget.y - this.player.y, this.shootTarget.x - this.player.x) + 
+                          (i - 1) * 0.1);
+            const ejected = this.player.ejectMassWithAngle(angle, 8 + i * 2);
+            if (ejected) {
+                this.cells.push(ejected);
+            }
+        }
+        this.updateUI();
+    }
+    
     update(deltaTime) {
         if (this.gameState !== 'playing') return;
+        
+        // Handle continuous shooting
+        if (this.isShooting && this.player) {
+            this.shootTimer += deltaTime * 1000; // Convert to milliseconds
+            if (this.shootTimer >= this.shootInterval) {
+                this.shoot();
+                this.shootTimer = 0;
+            }
+        }
         
         // Update camera to follow player
         if (this.player) {
@@ -612,7 +661,7 @@ class Game {
     drawMinimap() {
         const mapSize = 150;
         const mapX = this.canvas.width - mapSize - 20;
-        const mapY = 20;
+        const mapY = 100;
         
         // Minimap background
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
